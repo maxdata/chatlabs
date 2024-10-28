@@ -79,7 +79,10 @@ async function redirectToSetupMiddleware(
 
   if (!profile) {
     log.info({ userId: session?.user.id }, "Profile not found, redirecting to login")
-    return NextResponse.redirect(new URL("/login", request.url))
+    const currentUrl = new URL(request.url)
+    const pathnameAndQueryParams = `${currentUrl.pathname}?${currentUrl.searchParams.toString()}`
+
+    return NextResponse.redirect(new URL(`/login?next=${encodeURIComponent(pathnameAndQueryParams)}`, request.url))
   }
 
   if (!profile.has_onboarded) {
@@ -114,7 +117,12 @@ async function routeSubdomainMiddleware(
 
   if (host && host.includes('toolzflow.app') && subdomain !== 'www' && subdomain !== 'toolzflow') {
     log.info({ subdomain }, "Rewriting URL for subdomain")
+    // also add the query params to the new url
+    const currentUrl = new URL(request.url)
     const newUrl = new URL(`/share/${subdomain}`, request.url)
+    currentUrl.searchParams.forEach((value, key) => {
+      newUrl.searchParams.set(key, value)
+    })
     return NextResponse.rewrite(newUrl)
   }
 }

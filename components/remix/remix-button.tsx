@@ -23,7 +23,7 @@ function InnerRemixButton({ fileId }: RemixButtonProps) {
 
   const handleRemix = async () => {
     window.location.href = new URL(
-      !user ? `/login?next=/chat?remix=${fileId}` : `/chat?remix=${fileId}`,
+      `/chat?remix=${fileId}`,
       getBaseUrl()
     ).toString()
   }

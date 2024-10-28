@@ -316,9 +316,16 @@ export const ApplicationPage: React.FC<ApplicationPageProps> = ({
 
   useEffect(() => {
     if (!selectedCodeBlock) {
-      handleSelectCodeBlock(
-        chatMessages?.[chatMessages.length - 1]?.codeBlocks?.pop() || null
-      )
+      let codeBlock = null
+      for (let i = chatMessages.length - 1; i >= 0; i--) {
+        const message = chatMessages[i]
+        const codeBlocks = message?.codeBlocks
+        if (codeBlocks && codeBlocks.length > 0) {
+          codeBlock = codeBlocks[codeBlocks.length - 1]
+          break
+        }
+      }
+      handleSelectCodeBlock(codeBlock)
     }
   }, [selectedCodeBlock, chatMessages])
 
@@ -474,6 +481,7 @@ export const ApplicationPage: React.FC<ApplicationPageProps> = ({
       activeTab,
       handleSelectCodeBlock,
       handleCodeChange,
+      chatMessages,
       isEditable,
       application.theme,
       isSaving // Add isSaving to dependencies

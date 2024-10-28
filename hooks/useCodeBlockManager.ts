@@ -5,28 +5,39 @@ import { ChatMessage } from "@/types"
 import { updateMessage } from "@/db/messages"
 import { reconstructContentWithCodeBlocks } from "@/lib/messages"
 
+function compareCodeBlocks(codeBlock1: CodeBlock | null, codeBlock2: CodeBlock | null): boolean {
+    if (!codeBlock1 || !codeBlock2) {
+        return false
+    }
+    return codeBlock1.messageId === codeBlock2.messageId && codeBlock1.sequenceNo === codeBlock2.sequenceNo
+}
+
 export function useCodeBlockManager(ignore?: ChatMessage[]) {
     const [selectedCodeBlock, setSelectedCodeBlock] = useState<CodeBlock | null>(null)
     const { isGenerating, chatMessages, setChatMessages } = useContext(ChatbotUIChatContext)
+    const [isEditable, setIsEditable] = useState(false)
 
+    const lastCodeBlock = useMemo(() => {
+        if (chatMessages.length === 0) {
+            return null
+        }
 
-    const isEditable = useMemo(() => {
-        if (selectedCodeBlock && chatMessages.length > 0) {
-            const lastMessage = chatMessages[chatMessages.length - 1]
-            const codeBlocks = lastMessage?.codeBlocks
+        for (let i = chatMessages.length - 1; i >= 0; i--) {
+            const message = chatMessages[i]
+            const codeBlocks = message?.codeBlocks
             if (codeBlocks && codeBlocks.length > 0) {
-                const lastCodeBlock = codeBlocks[codeBlocks.length - 1]
-                if (lastCodeBlock.messageId === selectedCodeBlock.messageId && lastCodeBlock.sequenceNo === selectedCodeBlock.sequenceNo) {
-                    return true
-                }
+                return codeBlocks[codeBlocks.length - 1]
             }
         }
-        return false
-    }, [selectedCodeBlock, chatMessages])
+
+        return null
+    }, [chatMessages])
 
     const handleSelectCodeBlock = useCallback((codeBlock: CodeBlock | null) => {
+        console.log("handleSelectCodeBlock", codeBlock, lastCodeBlock)
         setSelectedCodeBlock(codeBlock)
-    }, [])
+        setIsEditable(compareCodeBlocks(codeBlock, lastCodeBlock))
+    }, [isEditable, lastCodeBlock, chatMessages])
 
     const handleCodeChange = useCallback((updatedCode: string, messageId: string, sequenceNo: number): void => {
 
@@ -55,6 +66,7 @@ export function useCodeBlockManager(ignore?: ChatMessage[]) {
                 }
                 return updatedMessages
             })
+
             handleSelectCodeBlock(updatedCodeBlock)
             updateMessage(updatedMessage.message!.id, {
                 content: reconstructContentWithCodeBlocks(
@@ -74,22 +86,7 @@ export function useCodeBlockManager(ignore?: ChatMessage[]) {
             return
         }
 
-        const lastMessage = chatMessages[chatMessages.length - 1]
-        const codeBlocks = lastMessage?.codeBlocks
-
-        if (!codeBlocks || codeBlocks.length === 0) {
-            return
-        }
-
-        const lastCodeBlock = codeBlocks[codeBlocks.length - 1]
-
-        if (
-            selectedCodeBlock &&
-            lastCodeBlock.filename &&
-            (selectedCodeBlock.messageId !== lastCodeBlock.messageId ||
-                selectedCodeBlock?.sequenceNo !== lastCodeBlock.sequenceNo ||
-                selectedCodeBlock?.code !== lastCodeBlock.code)
-        ) {
+        if (!compareCodeBlocks(selectedCodeBlock, lastCodeBlock)) {
             setTimeout(() => {
                 handleSelectCodeBlock(lastCodeBlock)
             }, 10)

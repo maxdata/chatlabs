@@ -175,7 +175,9 @@ export function MessageSharingDialog({
         subdomain,
         user_id: user.id,
         workspace_id: selectedWorkspace.id,
-        chat_id: chatId
+        chat_id: chatId,
+        application_type: "web_app",
+        sharing: "public"
       }
 
       let application

@@ -9,7 +9,10 @@ function compareCodeBlocks(codeBlock1: CodeBlock | null, codeBlock2: CodeBlock |
     if (!codeBlock1 || !codeBlock2) {
         return false
     }
-    return codeBlock1.messageId === codeBlock2.messageId && codeBlock1.sequenceNo === codeBlock2.sequenceNo
+    return codeBlock1.messageId === codeBlock2.messageId
+        && codeBlock1.sequenceNo === codeBlock2.sequenceNo
+        && codeBlock1.code === codeBlock2.code
+        && codeBlock1.language === codeBlock2.language
 }
 
 export function useCodeBlockManager(ignore?: ChatMessage[]) {
